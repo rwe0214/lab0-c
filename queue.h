@@ -25,6 +25,7 @@ typedef struct ELE {
 /* Queue structure */
 typedef struct {
     list_ele_t *head; /* Linked list of elements */
+    list_ele_t *tail;
     int size;
 } queue_t;
 
@@ -91,5 +92,6 @@ void q_reverse(queue_t *q);
  * element, do nothing.
  */
 void q_sort(queue_t *q);
+list_ele_t *sort(list_ele_t *start);
 
 #endif /* LAB0_QUEUE_H */
