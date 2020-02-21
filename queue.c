@@ -175,32 +175,49 @@ list_ele_t *sort(list_ele_t *start)
 {
     if (!start || !start->next)
         return start;
-
     list_ele_t *left = start;
     list_ele_t *right = left->next;
-
+    list_ele_t *nextr = NULL;
     left->next = NULL;
 
-    right = sort(right);
-
-    for (list_ele_t *merge = NULL; left || right;) {
-        if (!right || (left && strcmp(left->value, right->value) < 0)) {
-            if (!merge) {
-                start = merge = left;
+    for (; right; right = nextr) {
+        nextr = right->next;
+        right->next = NULL;
+        for (list_ele_t *merge = NULL; left || right;) {
+            if (!right || (left && strcmp(left->value, right->value) < 0)) {
+                if (!merge) {
+                    start = merge = left;
+                } else {
+                    merge->next = left;
+                    merge = merge->next;
+                }
+                left = left->next;
             } else {
-                merge->next = left;
-                merge = merge->next;
+                if (!merge) {
+                    start = merge = right;
+                } else {
+                    merge->next = right;
+                    merge = merge->next;
+                }
+                right = right->next;
             }
-            left = left->next;
-        } else {
-            if (!merge) {
-                start = merge = right;
-            } else {
-                merge->next = right;
-                merge = merge->next;
-            }
-            right = right->next;
         }
+        left = start;
     }
     return start;
 }
+/*
+void showlist(list_ele_t *l, char *s){
+    list_ele_t *tmp = l;
+    printf("\t%s = [", s);
+    if(!l){
+        printf("]\n");
+        return;
+    }
+    while(l && l->next){
+        printf("%s ", l->value);
+        l = l->next;
+    }
+    printf("%s]\n", l->value);
+    l = tmp;
+}*/
