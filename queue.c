@@ -58,7 +58,7 @@ bool q_insert_head(queue_t *q, char *s)
 
     newh->next = q->head;
     strncpy(newh->value, s, strlen(s) * sizeof(char));
-    (newh->value)[strlen(s) * sizeof(char)] = '\0';
+    (newh->value)[strlen(s)] = '\0';
     q->head = newh;
     if (q->size++ == 0)
         q->tail = newh;
@@ -78,22 +78,23 @@ bool q_insert_tail(queue_t *q, char *s)
     if (!q)
         return false;
 
-    list_ele_t *newt = malloc(sizeof(list_ele_t));
+    list_ele_t *newt = (list_ele_t *) malloc(sizeof(list_ele_t));
     if (!newt)
         return false;
-    newt->value = malloc(strlen(s) * sizeof(char) + 1);
-    if (!newt->value) {
+    newt->value = (char *) malloc((strlen(s) + 1) * sizeof(char));
+    if (!(newt->value)) {
         free(newt);
         return false;
     }
     newt->next = NULL;
-    strncpy(newt->value, s, strlen(s) * sizeof(char) + 1);
-    (newt->value)[strlen(s) * sizeof(char)] = '\0';
+    strncpy(newt->value, s, strlen(s) * sizeof(char));
+    (newt->value)[strlen(s)] = '\0';
 
-    q->tail->next = newt;
-    q->tail = newt;
     if (q->size++ == 0)
         q->head = newt;
+    else
+        q->tail->next = newt;
+    q->tail = newt;
 
     return true;
 }
@@ -168,56 +169,79 @@ void q_sort(queue_t *q)
     /* TODO: Remove the above comment when you are about to implement. */
     if (!q || q->size <= 1)
         return;
-    q->head = sort(q->head);
+    sort(&q->head, q->size, &q->tail);
 }
 
-list_ele_t *sort(list_ele_t *start)
+void merge(list_ele_t **llist_head,
+           list_ele_t **llist_tail,
+           list_ele_t **rlist_head,
+           list_ele_t **rlist_tail)
 {
-    if (!start || !start->next)
-        return start;
-    list_ele_t *left = start;
-    list_ele_t *right = left->next;
-    list_ele_t *nextr = NULL;
-    left->next = NULL;
+    list_ele_t *tmp = NULL;
 
-    for (; right; right = nextr) {
-        nextr = right->next;
-        right->next = NULL;
-        for (list_ele_t *merge = NULL; left || right;) {
-            if (!right || (left && strcmp(left->value, right->value) < 0)) {
-                if (!merge) {
-                    start = merge = left;
-                } else {
-                    merge->next = left;
-                    merge = merge->next;
-                }
-                left = left->next;
-            } else {
-                if (!merge) {
-                    start = merge = right;
-                } else {
-                    merge->next = right;
-                    merge = merge->next;
-                }
-                right = right->next;
-            }
+    if (strcmp((*llist_head)->value, (*rlist_head)->value) > 0) {
+        tmp = *llist_head;
+        *llist_head = *rlist_head;
+        *rlist_head = tmp;
+        tmp = *llist_tail;
+        *llist_tail = *rlist_tail;
+        *rlist_tail = tmp;
+    }
+
+    list_ele_t *l_head = *llist_head, *l_tail = *llist_tail;
+    list_ele_t *r_head = *rlist_head;
+    list_ele_t *r_end_next = (*rlist_tail)->next;
+    while (l_head != l_tail && r_head != r_end_next) {
+        if (strcmp(l_head->next->value, r_head->value) > 0) {
+            tmp = r_head->next;
+            r_head->next = l_head->next;
+            l_head->next = r_head;
+            r_head = tmp;
         }
-        left = start;
+        l_head = l_head->next;
     }
-    return start;
+    /*if rlist is empty but llist in not,
+    all of rlist nodes are alreay inserted into llist*/
+    if (l_head == l_tail)
+        // In this case the tail of sorted list is rlist_tail
+        l_head->next = r_head;
+    else
+        // In this case the tail of sorted list is llist_tail
+        *rlist_tail = *llist_tail;
 }
-/*
-void showlist(list_ele_t *l, char *s){
-    list_ele_t *tmp = l;
-    printf("\t%s = [", s);
-    if(!l){
-        printf("]\n");
-        return;
+void sort(list_ele_t **start, int n, list_ele_t **end)
+{
+    list_ele_t *prev_tail = NULL;
+    for (int cmp_t = 1; cmp_t < n; cmp_t *= 2) {
+        list_ele_t *iter;
+        for (iter = *start; iter;) {
+            list_ele_t *llist_head = iter, *llist_tail = iter;
+            list_ele_t *rlist_head, *rlist_tail;
+            int is_first = (llist_head == *start) ? 1 : 0;
+
+            for (int i = 1; i < cmp_t && llist_tail->next;
+                 i++, llist_tail = llist_tail->next)
+                ;
+            rlist_head = llist_tail->next;
+            if (!rlist_head)
+                break;
+            rlist_tail = rlist_head;
+            for (int i = 1; i < cmp_t && rlist_tail->next;
+                 i++, rlist_tail = rlist_tail->next)
+                ;
+
+            list_ele_t *tmp = rlist_tail->next;
+
+            merge(&llist_head, &llist_tail, &rlist_head, &rlist_tail);
+            if (is_first)
+                *start = llist_head;
+            else
+                prev_tail->next = llist_head;
+            prev_tail = rlist_tail;
+            iter = tmp;
+        }
+        /*NEED TO INSURE THAT
+        prev_tail ALWAYS POINT TO THE TAIL OF WHOLE LIST!*/
+        prev_tail->next = iter;
     }
-    while(l && l->next){
-        printf("%s ", l->value);
-        l = l->next;
-    }
-    printf("%s]\n", l->value);
-    l = tmp;
-}*/
+}
