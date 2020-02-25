@@ -14,6 +14,7 @@
 #include <unistd.h>
 
 #include "console.h"
+#include "linenoise/linenoise.h"
 #include "report.h"
 
 /* Some global values */
@@ -583,32 +584,40 @@ int cmd_select(int nfds,
         /* Add input fd to readset for select */
         infd = buf_stack->fd;
         FD_SET(infd, readfds);
-        if (infd == STDIN_FILENO && prompt_flag) {
-            printf("%s", prompt);
-            fflush(stdout);
-            prompt_flag = true;
-        }
 
         if (infd >= nfds)
             nfds = infd + 1;
     }
     if (nfds == 0)
         return 0;
+    if (infd != STDIN_FILENO) {
+        /* Not using STDIN as readfd  */
+        int result = select(nfds, readfds, writefds, exceptfds, timeout);
+        if (result <= 0)
+            return result;
 
-    int result = select(nfds, readfds, writefds, exceptfds, timeout);
-    if (result <= 0)
+        infd = buf_stack->fd;
+        if (readfds && FD_ISSET(infd, readfds)) {
+            /* Commandline input available */
+            FD_CLR(infd, readfds);
+            result--;
+            cmdline = readline();
+            if (cmdline)
+                interpret_cmd(cmdline);
+        }
+
         return result;
-
-    infd = buf_stack->fd;
-    if (readfds && FD_ISSET(infd, readfds)) {
-        /* Commandline input available */
-        FD_CLR(infd, readfds);
-        result--;
-        cmdline = readline();
-        if (cmdline)
+    } else {
+        cmdline = linenoise("cmd> ");
+        if (cmdline) {
+            if (cmdline[0] != '\n') {
+                linenoiseHistoryAdd(cmdline); /* Add to the history. */
+            }
             interpret_cmd(cmdline);
+        }
+        free(cmdline);
+        return 0;
     }
-    return result;
 }
 
 bool finish_cmd()

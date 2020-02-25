@@ -29,9 +29,9 @@
  * OK as long as head field of queue_t structure is in first position in
  * solution code
  */
-#include "queue.h"
-
 #include "console.h"
+#include "linenoise/linenoise.h"
+#include "queue.h"
 #include "report.h"
 
 /* Settable parameters */
@@ -57,6 +57,7 @@ static int fail_limit = BIG_QUEUE;
 static int fail_count = 0;
 
 static int string_length = MAXSTRING;
+static int infile_flag = 0;
 
 #define MIN_RANDSTR_LEN 5
 #define MAX_RANDSTR_LEN 10
@@ -76,6 +77,37 @@ static bool do_sort(int argc, char *argv[]);
 static bool do_show(int argc, char *argv[]);
 
 static void queue_init();
+
+void completion(const char *buf, linenoiseCompletions *lc)
+{
+    if (buf[0] == 'n') {
+        linenoiseAddCompletion(lc, "new");
+    } else if (buf[0] == 'f') {
+        linenoiseAddCompletion(lc, "free");
+    } else if (buf[0] == 'i') {
+        linenoiseAddCompletion(lc, "ih");
+        linenoiseAddCompletion(lc, "it");
+    } else if (buf[0] == 'r') {
+        linenoiseAddCompletion(lc, "rh");
+        linenoiseAddCompletion(lc, "rhq");
+        linenoiseAddCompletion(lc, "reverse");
+    } else if (buf[0] == 's') {
+        linenoiseAddCompletion(lc, "sort");
+        linenoiseAddCompletion(lc, "size");
+        linenoiseAddCompletion(lc, "show");
+        linenoiseAddCompletion(lc, "source");
+    } else if (buf[0] == 'h') {
+        linenoiseAddCompletion(lc, "help");
+    } else if (buf[0] == 'o') {
+        linenoiseAddCompletion(lc, "option");
+    } else if (buf[0] == 'q') {
+        linenoiseAddCompletion(lc, "quit");
+    } else if (buf[0] == 'l') {
+        linenoiseAddCompletion(lc, "log");
+    } else if (buf[0] == 't') {
+        linenoiseAddCompletion(lc, "time");
+    }
+}
 
 static void console_init()
 {
@@ -104,6 +136,9 @@ static void console_init()
               NULL);
     add_param("fail", &fail_limit,
               "Number of times allow queue operations to return false", NULL);
+    if (!infile_flag) {
+        linenoiseSetCompletionCallback(completion);
+    }
 }
 
 static bool do_new(int argc, char *argv[])
@@ -736,6 +771,7 @@ int main(int argc, char *argv[])
             strncpy(buf, optarg, BUFSIZE);
             buf[BUFSIZE - 1] = '\0';
             infile_name = buf;
+            infile_flag = 1;
             break;
         case 'v':
             level = atoi(optarg);

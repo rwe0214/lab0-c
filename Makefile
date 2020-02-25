@@ -3,6 +3,7 @@ CFLAGS = -O1 -g -Wall -Werror -Idudect -I.
 
 GIT_HOOKS := .git/hooks/applied
 DUT_DIR := dudect
+LN_DIR := linenoise
 all: $(GIT_HOOKS) qtest
 
 # Control the build verbosity
@@ -26,7 +27,8 @@ $(GIT_HOOKS):
 	@echo
 
 OBJS := qtest.o report.o console.o harness.o queue.o \
-        random.o dudect/constant.o dudect/fixture.o dudect/ttest.o
+        random.o dudect/constant.o dudect/fixture.o dudect/ttest.o \
+		linenoise/linenoise.o
 deps := $(OBJS:%.o=.%.o.d)
 
 qtest: $(OBJS)
@@ -35,6 +37,7 @@ qtest: $(OBJS)
 
 %.o: %.c
 	@mkdir -p .$(DUT_DIR)
+	@mkdir -p .$(LN_DIR)
 	$(VECHO) "  CC\t$@\n"
 	$(Q)$(CC) -o $@ $(CFLAGS) -c -MMD -MF .$@.d $<
 
