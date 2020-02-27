@@ -11,6 +11,7 @@
 #include <sys/wait.h>
 #include <time.h>
 #include <unistd.h>
+
 #include "dudect/fixture.h"
 
 /* Our program needs to use regular malloc/free */
@@ -109,6 +110,24 @@ void completion(const char *buf, linenoiseCompletions *lc)
     }
 }
 
+char *hints(const char *buf, int *color, int *bold)
+{
+    if (!strcasecmp(buf, "ih") || !strcasecmp(buf, "it")) {
+        *color = 35;
+        *bold = 0;
+        return " str [n]";
+    } else if (!strcasecmp(buf, "rh")) {
+        *color = 35;
+        *bold = 0;
+        return " [str]";
+    } else if (!strcasecmp(buf, "size")) {
+        *color = 35;
+        *bold = 0;
+        return " [n]";
+    }
+    return NULL;
+}
+
 static void console_init()
 {
     add_cmd("new", do_new, "                | Create new queue");
@@ -138,6 +157,8 @@ static void console_init()
               "Number of times allow queue operations to return false", NULL);
     if (!infile_flag) {
         linenoiseSetCompletionCallback(completion);
+        linenoiseSetHintsCallback(hints);
+        linenoiseHistoryLoad("history.txt");
     }
 }
 

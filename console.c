@@ -1,5 +1,7 @@
 /* Implementation of simple command-line interface */
 
+#include "console.h"
+
 #include <ctype.h>
 #include <fcntl.h>
 #include <inttypes.h>
@@ -13,7 +15,6 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#include "console.h"
 #include "linenoise/linenoise.h"
 #include "report.h"
 
@@ -612,8 +613,14 @@ int cmd_select(int nfds,
         if (cmdline) {
             if (cmdline[0] != '\n') {
                 linenoiseHistoryAdd(cmdline); /* Add to the history. */
+                linenoiseHistorySave("history.txt");
             }
-            interpret_cmd(cmdline);
+            char *cmdline_terminate = malloc(strlen(cmdline) + 2);
+            strncpy(cmdline_terminate, cmdline, strlen(cmdline));
+            cmdline_terminate[strlen(cmdline)] = '\n';
+            cmdline_terminate[strlen(cmdline) + 1] = '\0';
+            interpret_cmd(cmdline_terminate);
+            free(cmdline_terminate);
         }
         free(cmdline);
         return 0;
