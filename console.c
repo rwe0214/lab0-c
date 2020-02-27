@@ -618,12 +618,12 @@ int cmd_select(int nfds,
                 linenoiseHistoryAdd(cmdline); /* Add to the history. */
                 linenoiseHistorySave("history.txt");
             }
-            char *cmdline_terminate = malloc(strlen(cmdline) + 2);
-            strncpy(cmdline_terminate, cmdline, strlen(cmdline));
-            cmdline_terminate[strlen(cmdline)] = '\n';
-            cmdline_terminate[strlen(cmdline) + 1] = '\0';
-            interpret_cmd(cmdline_terminate);
-            free(cmdline_terminate);
+            char *cmdline_terminator = malloc(strlen(cmdline) + 2);
+            strncpy(cmdline_terminator, cmdline, strlen(cmdline));
+            cmdline_terminator[strlen(cmdline)] = '\n';
+            cmdline_terminator[strlen(cmdline) + 1] = '\0';
+            interpret_cmd(cmdline_terminator);
+            free(cmdline_terminator);
         }
         free(cmdline);
         return 0;
