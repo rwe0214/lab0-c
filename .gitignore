@@ -2,6 +2,7 @@ qtest
 *.o
 *.o.d
 *.dSYM
+history.txt
 .vscode
 .devcontainer
 .DS_Store
